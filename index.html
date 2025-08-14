@@ -79,7 +79,7 @@
 </head>
 <body>
     <h1>オンラインクレーンゲーム</h1>
-    <img id="video" src="http://localhost:5000/video_feed1" alt="カメラ映像" onclick="toggleCamera()">
+    <img id="video" src="https://9bc18a0520d6.ngrok-free.app" alt="カメラ映像" onclick="toggleCamera()">
     <br>
     <button id="button1" onmousedown="sendCommand('first')">&rarr;</button>
     <button id="button2" onmousedown="sendCommand('second')">&uarr;</button>
@@ -132,15 +132,13 @@
         }
 
         function switchToSideCamera() {
-            video.src = 'http://localhost:5000/video_feed2';
-            status.textContent = '横カメラ';
-        }
-
-        function switchToFrontCamera() {
-            video.src = 'http://localhost:5000/video_feed1';
-            status.textContent = '前カメラ';
-        }
-
+    video.src = 'https://new123abc.ngrok-free.app/video_feed2';
+    status.textContent = '横カメラ';
+}
+function switchToFrontCamera() {
+    video.src = 'https://new123abc.ngrok-free.app/video_feed1';
+    status.textContent = '前カメラ';
+}
         function toggleCamera() {
             if (video.src.includes('video_feed1')) {
                 video.src = 'http://localhost:5000/video_feed2';
