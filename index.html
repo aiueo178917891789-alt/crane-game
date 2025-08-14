@@ -79,7 +79,7 @@
 </head>
 <body>
     <h1>オンラインクレーンゲーム</h1>
-    <img id="video" src="https://5fbac3e91f3c.ngrok-free.app/" alt="カメラ映像" onclick="toggleCamera()">
+    <img id="video" src="https://175d70f9d13f.ngrok-free.app/" alt="カメラ映像" onclick="toggleCamera()">
     <br>
     <button id="button1" onmousedown="sendCommand('first')">&rarr;</button>
     <button id="button2" onmousedown="sendCommand('second')">&uarr;</button>
@@ -131,12 +131,12 @@
             }
         }
 
- function switchToSideCamera() {
-    video.src = 'https://5fbac3e91f3c.ngrok-free.app/video_2';
+function switchToSideCamera() {
+    video.src = 'https://fa09e390135b.ngrok-free.app/video_feed2';
     status.textContent = '横カメラ';
 }
 function switchToFrontCamera() {
-    video.src = 'https://5fbac3e91f3c.ngrok-free.app/video_feed1';
+    video.src = 'https://fa09e390135b.ngrok-free.app/video_feed1';
     status.textContent = '前カメラ';
 }
         function toggleCamera() {
