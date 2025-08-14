@@ -86,7 +86,7 @@
     <div id="status">接続中...</div>
 
     <script>
-        const ws = new WebSocket('ws://localhost:8080');
+        const ws = new WebSocket('wss://crane-game-ws.onrender.com');
         const status = document.getElementById('status');
         const video = document.getElementById('video');
         let activeCommand = null; // 現在押しているコマンドを追跡
