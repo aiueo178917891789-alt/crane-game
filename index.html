@@ -1,50 +1,120 @@
-<!DOCTYPE html>
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>クレーンゲーム</title>
+    <title>オンラインクレーンゲーム</title>
     <style>
-        body { margin: 0; font-family: Arial, sans-serif; text-align: center; }
-        #video {
-            width: 100%;
-            max-width: 720px;
-            height: auto;
-            margin-bottom: 20px;
-            cursor: pointer;
-            display: block;
-            margin-left: auto;
-            margin-right: auto;
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 20px;
         }
         button {
-            padding: 15px 30px;
-            font-size: 18px;
-            background-color: #FFABB7;
+            width: 100px;
+            height: 100px;
+            margin: 10px;
+            font-size: 24px; /* 矢印を大きく */
+            cursor: pointer;
+            background-color: #FFC1CC; /* 薄いピンク */
+            color: white;
             border: none;
-            border-radius: 5px;
-            margin: 5px;
-            touch-action: manipulation; /* スマホのタッチ最適化 */
+            border-radius: 50%; /* 完全に丸い */
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
-        button:active { transform: scale(1.1); }
-        #status { margin-top: 10px; font-size: 16px; }
+        button:hover {
+            background-color: #FFABB7; /* 薄いピンクの濃い目 */
+        }
+        #status {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+        #video {
+            width: 720px;
+            height: 720px;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
-    <img id="video" src="https://fa09e390135b.ngrok-free.app/video_feed1" alt="カメラ映像" onclick="toggleCamera()">
-    <div>
-        <button id="button1">→</button>
-        <button id="button2">↑</button>
-    </div>
-    <div id="status">サーバーに接続しました！</div>
-    <script>
-        const ws = new WebSocket('wss://crane-game-ws.onrender.com');
-        let activeCommand = null;
-        const video = document.getElementById('video');
-        const status = document.getElementById('status');
+    <h1>オンラインクレーンゲーム</h1>
+    <img id="video" src="https://2040b3ab276d.ngrok-free.app/video_feed1" alt="カメラ映像" onclick="toggleCamera()">
+    <br>
+    <button id="button1" onmousedown="sendCommand('first')">&rarr;</button>
+    <button id="button2" onmousedown="sendCommand('second')">&uarr;</button>
+    <div id="status">接続中...</div>
 
-        ws.onopen = () => status.textContent = 'サーバーに接続しました！';
-        ws.onclose = () => status.textContent = 'サーバーとの接続が切れました';
-        ws.onerror = () => status.textContent = 'サーバー接続エラー';
+    <script>
+        const ws = new WebSocket('ws://localhost:8080');
+        const status = document.getElementById('status');
+        const video = document.getElementById('video');
+        let activeCommand = null; // 現在押しているコマンドを追跡
+
+        ws.onopen = () => {
+            status.textContent = 'サーバーに接続しました！';
+        };
+
+        ws.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                if (data.message) {
+                    status.textContent = data.message;
+                } else if (data.command) {
+                    status.textContent = `コマンド受信: ${data.command}`;
+                }
+            } catch (e) {
+                status.textContent = `エラー: ${e}`;
+            }
+        };
+
+        ws.onclose = () => {
+            status.textContent = 'サーバーとの接続が切れました。';
+        };
+
+        ws.onerror = (error) => {
+            status.textContent = `エラー: ${error}`;
+        };
 
         function sendCommand(command) {
             if (ws.readyState === WebSocket.OPEN) {
@@ -52,55 +122,56 @@
                 status.textContent = `コマンド送信: ${command}`;
                 console.log(`送信: ${command}`);
                 if (command !== 'off') {
-                    activeCommand = command;
+                    activeCommand = command; // コマンドを追跡
                 } else {
-                    activeCommand = null;
+                    activeCommand = null; // offでリセット
                 }
             } else {
                 status.textContent = 'サーバーに接続していません！';
             }
         }
 
+        function switchToSideCamera() {
+            video.src = 'http://localhost:5000/video_feed2';
+            status.textContent = '横カメラ';
+        }
+
+        function switchToFrontCamera() {
+            video.src = 'http://localhost:5000/video_feed1';
+            status.textContent = '前カメラ';
+        }
+
         function toggleCamera() {
             if (video.src.includes('video_feed1')) {
-                video.src = 'https://fa09e390135b.ngrok-free.app/video_feed2';
+                video.src = 'https://2040b3ab276d.ngrok-free.app/video_feed2';
                 status.textContent = '横カメラ';
             } else {
-                video.src = 'https://fa09e390135b.ngrok-free.app/video_feed1';
+                video.src = 'https://2040b3ab276d.ngrok-free.app/video_feed1';
                 status.textContent = '前カメラ';
             }
         }
 
-        const button1 = document.getElementById('button1');
-        const button2 = document.getElementById('button2');
-
-        // マウスイベント
-        button1.addEventListener('mousedown', () => sendCommand('first'));
-        button2.addEventListener('mousedown', () => sendCommand('second'));
+        // ボタン外でマウスを離したときの処理
         document.addEventListener('mouseup', () => {
             if (activeCommand) {
                 sendCommand('off');
-                if (activeCommand === 'first') toggleCamera();
-                else if (activeCommand === 'second') toggleCamera();
+                if (activeCommand === 'first') {
+                    switchToSideCamera();
+                } else if (activeCommand === 'second') {
+                    switchToFrontCamera();
+                }
             }
         });
 
-        // タッチイベント（スマホ用）
-        button1.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            sendCommand('first');
+        // ボタンのonmouseupイベント（ボタン上で離した場合）
+        document.getElementById('button1').addEventListener('mouseup', () => {
+            sendCommand('off');
+            switchToSideCamera();
         });
-        button2.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            sendCommand('second');
-        });
-        document.addEventListener('touchend', (e) => {
-            if (activeCommand) {
-                e.preventDefault();
-                sendCommand('off');
-                if (activeCommand === 'first') toggleCamera();
-                else if (activeCommand === 'second') toggleCamera();
-            }
+
+        document.getElementById('button2').addEventListener('mouseup', () => {
+            sendCommand('off');
+            switchToFrontCamera();
         });
     </script>
 </body>
