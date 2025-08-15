@@ -2,7 +2,7 @@ const express = require('express');
 const fetch = require('node-fetch');
 const app = express();
 
-app.use(express.static('public')); // index.htmlがあるフォルダ
+app.use(express.static('public'));
 
 app.get('/video_feed1', async (req, res) => {
   try {

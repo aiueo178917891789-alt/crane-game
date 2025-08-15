@@ -21,13 +21,13 @@
       padding: 15px 30px;
       margin: 10px;
       font-size: 18px;
-      background-color: #ffc1cc; /* 薄いピンク */
+      background-color: #ffc1cc;
       border: none;
       border-radius: 5px;
       cursor: pointer;
     }
     .button:hover {
-      transform: scale(1.1); /* ホバーでちょっと大きく */
+      transform: scale(1.1);
     }
   </style>
 </head>
@@ -43,7 +43,6 @@
     videoFeed.addEventListener('click', () => {
       videoFeed.src = videoFeed.src.includes('video_feed1') ? '/video_feed2' : '/video_feed1';
     });
-
     function sendCommand(cmd) {
       fetch('/command', {
         method: 'POST',
