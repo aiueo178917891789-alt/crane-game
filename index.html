@@ -1,176 +1,57 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <title>オンラインクレーンゲーム</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin-top: 20px;
-        }
-        button {
-            width: 100px;
-            height: 100px;
-            margin: 10px;
-            font-size: 24px;
-            cursor: pointer;
-            background-color: #FFC1CC;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-        button:hover {
-            background-color: #FFABB7;
-        }
-        #status {
-            margin-top: 20px;
-            font-size: 18px;
-        }
-        #video {
-            width: 720px;
-            height: 720px;
-            margin-bottom: 20px;
-            cursor: pointer;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>クレーンゲーム</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: #f0f0f0;
+      font-family: Arial, sans-serif;
+    }
+    #videoFeed {
+      width: 720px;
+      height: 720px;
+      border: 2px solid #333;
+    }
+    .button {
+      padding: 15px 30px;
+      margin: 10px;
+      font-size: 18px;
+      background-color: #ffc1cc; /* 薄いピンク */
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .button:hover {
+      transform: scale(1.1); /* ホバーでちょっと大きく */
+    }
+  </style>
 </head>
 <body>
-    <h1>オンラインクレーンゲーム</h1>
-    <img id="video" src="http://56.155.112.50:5000/video_feed1" alt="カメラ映像" onclick="toggleCamera()">
-    <br>
-    <button id="button1" onmousedown="sendCommand('first')">&rarr;</button>
-    <button id="button2" onmousedown="sendCommand('second')">&uarr;</button>
-    <div id="status">接続中...</div>
+  <h1>クレーンゲーム</h1>
+  <img src="/video_feed1" id="videoFeed" width="720" height="720">
+  <div>
+    <button class="button" onmousedown="sendCommand('first')" onmouseup="sendCommand('off')" ontouchstart="sendCommand('first')" ontouchend="sendCommand('off')">→</button>
+    <button class="button" onmousedown="sendCommand('second')" onmouseup="sendCommand('off')" ontouchstart="sendCommand('second')" ontouchend="sendCommand('off')">↑</button>
+  </div>
+  <script>
+    const videoFeed = document.getElementById('videoFeed');
+    videoFeed.addEventListener('click', () => {
+      videoFeed.src = videoFeed.src.includes('video_feed1') ? '/video_feed2' : '/video_feed1';
+    });
 
-    <script>
-        const ws = new WebSocket('wss://crane-game-ws.onrender.com');
-        const status = document.getElementById('status');
-        const video = document.getElementById('video');
-        let activeCommand = null;
-
-        ws.onopen = () => {
-            status.textContent = 'サーバーに接続しました！';
-        };
-
-        ws.onmessage = (event) => {
-            try {
-                const data = JSON.parse(event.data);
-                if (data.message) {
-                    status.textContent = data.message;
-                } else if (data.command) {
-                    status.textContent = `コマンド受信: ${data.command}`;
-                }
-            } catch (e) {
-                status.textContent = `エラー: ${e}`;
-            }
-        };
-
-        ws.onclose = () => {
-            status.textContent = 'サーバーとの接続が切れました。';
-        };
-
-        ws.onerror = (error) => {
-            status.textContent = `エラー: ${error}`;
-        };
-
-        function sendCommand(command) {
-            if (ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({ command: command }));
-                status.textContent = `コマンド送信: ${command}`;
-                console.log(`送信: ${command}`);
-                if (command !== 'off') {
-                    activeCommand = command;
-                } else {
-                    activeCommand = null;
-                }
-            } else {
-                status.textContent = 'サーバーに接続していません！';
-            }
-        }
-
-        function switchToSideCamera() {
-            video.src = 'http://56.155.112.50:5000/video_feed2';
-            status.textContent = '横カメラ';
-        }
-
-        function switchToFrontCamera() {
-            video.src = 'http://56.155.112.50:5000/video_feed1';
-            status.textContent = '前カメラ';
-        }
-
-        function toggleCamera() {
-            if (video.src.includes('video_feed1')) {
-                video.src = 'http://56.155.112.50:5000/video_feed2';
-                status.textContent = '横カメラ';
-            } else {
-                video.src = 'http://56.155.112.50:5000/video_feed1';
-                status.textContent = '前カメラ';
-            }
-        }
-
-        document.addEventListener('mouseup', () => {
-            if (activeCommand) {
-                sendCommand('off');
-                if (activeCommand === 'first') {
-                    switchToSideCamera();
-                } else if (activeCommand === 'second') {
-                    switchToFrontCamera();
-                }
-            }
-        });
-
-        document.getElementById('button1').addEventListener('mouseup', () => {
-            sendCommand('off');
-            switchToSideCamera();
-        });
-
-        document.getElementById('button2').addEventListener('mouseup', () => {
-            sendCommand('off');
-            switchToFrontCamera();
-        });
-    </script>
+    function sendCommand(cmd) {
+      fetch('/command', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ command: cmd })
+      })
+      .catch(error => console.error('Error:', error));
+    }
+  </script>
 </body>
 </html>

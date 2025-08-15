@@ -1,24 +1,42 @@
-const WebSocket = require('ws');
-const server = new WebSocket.Server({ port: process.env.PORT || 8080 });
+const express = require('express');
+const fetch = require('node-fetch');
+const app = express();
 
-server.on('connection', (ws) => {
-    console.log('クライアントが接続しました');
-    ws.on('message', (message) => {
-        console.log(`受け取ったメッセージ: ${message}`);
-        try {
-            const data = JSON.parse(message);
-            server.clients.forEach((client) => {
-                if (client.readyState === WebSocket.OPEN) {
-                    client.send(JSON.stringify(data));
-                }
-            });
-        } catch (e) {
-            console.error(`エラー: ${e}`);
-        }
-    });
-    ws.on('close', () => {
-        console.log('クライアントが切断しました');
-    });
+app.use(express.static('public')); // index.htmlがあるフォルダ
+
+app.get('/video_feed1', async (req, res) => {
+  try {
+    const response = await fetch('http://56.155.112.50:5000/video_feed1');
+    res.set('Content-Type', response.headers.get('content-type'));
+    response.body.pipe(res);
+  } catch (error) {
+    res.status(500).send('映像の取得に失敗しました');
+  }
 });
 
-console.log(`WebSocketサーバーが ws://localhost:${process.env.PORT || 8080} で起動しました`);
+app.get('/video_feed2', async (req, res) => {
+  try {
+    const response = await fetch('http://56.155.112.50:5000/video_feed2');
+    res.set('Content-Type', response.headers.get('content-type'));
+    response.body.pipe(res);
+  } catch (error) {
+    res.status(500).send('映像の取得に失敗しました');
+  }
+});
+
+app.post('/command', express.json(), async (req, res) => {
+  try {
+    await fetch('http://56.155.112.50:5000/command', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req.body)
+    });
+    res.status(200).send();
+  } catch (error) {
+    res.status(500).send('コマンドの送信に失敗しました');
+  }
+});
+
+app.listen(process.env.PORT || 3000, () => {
+  console.log('サーバーが起動しました');
+});

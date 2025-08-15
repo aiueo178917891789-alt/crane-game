@@ -7,9 +7,33 @@
     "start": "node server.js"
   },
   "dependencies": {
+    "express": "^5.1.0",
+    "node-fetch": "^3.3.2",
     "ws": "^8.18.0"
   },
   "engines": {
     "node": "18.x"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aiueo178917891789-alt/crane-game.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/aiueo178917891789-alt/crane-game/issues"
+  },
+  "homepage": "https://github.com/aiueo178917891789-alt/crane-game#readme"
+}
+{
+  "name": "crane-game-web",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "node-fetch": "^2.6.1"
   }
 }
