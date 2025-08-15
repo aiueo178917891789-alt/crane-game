@@ -52,18 +52,18 @@
             width: 100px;
             height: 100px;
             margin: 10px;
-            font-size: 24px; /* 矢印を大きく */
+            font-size: 24px;
             cursor: pointer;
-            background-color: #FFC1CC; /* 薄いピンク */
+            background-color: #FFC1CC;
             color: white;
             border: none;
-            border-radius: 50%; /* 完全に丸い */
+            border-radius: 50%;
             display: inline-flex;
             align-items: center;
             justify-content: center;
         }
         button:hover {
-            background-color: #FFABB7; /* 薄いピンクの濃い目 */
+            background-color: #FFABB7;
         }
         #status {
             margin-top: 20px;
@@ -86,10 +86,10 @@
     <div id="status">接続中...</div>
 
     <script>
-        const ws = new WebSocket('ws://localhost:8080');
+        const ws = new WebSocket('wss://crane-game-ws.onrender.com');
         const status = document.getElementById('status');
         const video = document.getElementById('video');
-        let activeCommand = null; // 現在押しているコマンドを追跡
+        let activeCommand = null;
 
         ws.onopen = () => {
             status.textContent = 'サーバーに接続しました！';
@@ -122,9 +122,9 @@
                 status.textContent = `コマンド送信: ${command}`;
                 console.log(`送信: ${command}`);
                 if (command !== 'off') {
-                    activeCommand = command; // コマンドを追跡
+                    activeCommand = command;
                 } else {
-                    activeCommand = null; // offでリセット
+                    activeCommand = null;
                 }
             } else {
                 status.textContent = 'サーバーに接続していません！';
@@ -132,12 +132,12 @@
         }
 
         function switchToSideCamera() {
-            video.src = 'http://localhost:5000/video_feed2';
+            video.src = 'https://2040b3ab276d.ngrok-free.app/video_feed2';
             status.textContent = '横カメラ';
         }
 
         function switchToFrontCamera() {
-            video.src = 'http://localhost:5000/video_feed1';
+            video.src = 'https://2040b3ab276d.ngrok-free.app/video_feed1';
             status.textContent = '前カメラ';
         }
 
@@ -151,7 +151,6 @@
             }
         }
 
-        // ボタン外でマウスを離したときの処理
         document.addEventListener('mouseup', () => {
             if (activeCommand) {
                 sendCommand('off');
@@ -163,7 +162,6 @@
             }
         });
 
-        // ボタンのonmouseupイベント（ボタン上で離した場合）
         document.getElementById('button1').addEventListener('mouseup', () => {
             sendCommand('off');
             switchToSideCamera();
